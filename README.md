@@ -48,3 +48,11 @@ No Backend / Server
 Pure front‑end application – All data is stored locally in the browser. No external database, API calls, or server‑side logic.
 
 Note: This project is a functional prototype / demo intended for local or educational use. The authentication, encryption, and file storage are not secure for real‑world classified data.
+
+Secure communication Channel:
+Decryption code for all messages: 123456
+
+·	Admin: username admin, password admin123
+·	Analyst: username analyst, password analyst123
+·	Viewer: username viewer, password viewer123
+
