@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>CLASSIFIED • Data Monitoring System | File Attachments</title>
+  <!-- Font Awesome 6, Google Fonts, Chart.js, html2pdf, CryptoJS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <style>
+    /* CSS Variables (same as before) */
+    :root {
+      --bg-gradient-start: #0a0c14;
+      --bg-gradient-end: #03050b;
+      --panel-bg: rgba(8, 12, 25, 0.65);
+      --text-primary: #eef5ff;
+      --border-cyan: #0ff;
+      --card-bg: rgba(0, 0, 0, 0.55);
+      --input-bg: #0e1325;
+      --input-border: #2a3f6e;
+      --btn-bg: #0f1a2f;
+      --btn-primary-bg: #0a5f7a;
+      --alert-bg: rgba(255, 30, 60, 0.2);
+      --table-header-bg: #071021aa;
+      --table-border: #2f4168;
+      --threat-critical: #b91c2e;
+      --threat-high: #c2410c;
+      --threat-medium: #b45309;
+      --threat-low: #2d6a4f;
+    }
+    body.light {
+      --bg-gradient-start: #e0e7ff;
+      --bg-gradient-end: #cbd5e6;
+      --panel-bg: rgba(245, 248, 255, 0.85);
+      --text-primary: #111827;
+      --border-cyan: #1e88e5;
+      --card-bg: rgba(255, 255, 255, 0.7);
+      --input-bg: #f9fafb;
+      --input-border: #9ca3af;
+      --btn-bg: #e2e8f0;
+      --btn-primary-bg: #0f6b8c;
+      --alert-bg: rgba(220, 38, 38, 0.1);
+      --table-header-bg: #e2e8f0;
+      --table-border: #cbd5e1;
+      --threat-critical: #b91c2e;
+      --threat-high: #c2410c;
+      --threat-medium: #b45309;
+      --threat-low: #2d6a4f;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: radial-gradient(circle at 20% 30%, var(--bg-gradient-start), var(--bg-gradient-end));
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      padding: 1.8rem 2rem;
+      min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
+    }
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      border-radius: 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(0, 255, 255, 0.1) inset;
+    }
+    .container { max-width: 1600px; margin: 0 auto; }
+    /* Header (unchanged) */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 2rem;
+      border-left: 4px solid var(--border-cyan);
+    }
+    .title-section h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 1.9rem;
+      background: linear-gradient(135deg, #fff, var(--border-cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .title-section p {
+      font-size: 0.8rem;
+      color: #9bb8ff;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .role-badge {
+      background: #0a1428;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      border-right: 2px solid var(--border-cyan);
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    .logout-btn, .theme-toggle, .secure-comms-btn {
+      background: var(--btn-bg);
+      border: none;
+      border-radius: 2rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+    .logout-btn:hover, .theme-toggle:hover, .secure-comms-btn:hover {
+      background: var(--btn-primary-bg);
+    }
+    /* Threat Feed (same as before) */
+    .threat-feed-container {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .ticker {
+      flex: 2;
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      border-left: 4px solid var(--border-cyan);
+    }
+    .ticker-content {
+      display: inline-block;
+      animation: scrollTicker 20s linear infinite;
+      font-family: monospace;
+    }
+    @keyframes scrollTicker {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .threat-feed-panel {
+      flex: 1;
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .threat-feed-panel h4 {
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-cyan);
+    }
+    .threat-alert {
+      font-size: 0.75rem;
+      padding: 0.2rem 0;
+      border-bottom: 1px solid var(--table-border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .threat-alert .severity {
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .severity-Critical { color: #ff6680; }
+    .severity-High { color: #ffa500; }
+    .severity-Medium { color: #ffcc00; }
+    .severity-Low { color: #66ff66; }
+    .refresh-feed {
+      background: var(--btn-bg);
+      border: none;
+      border-radius: 2rem;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 1.5rem;
+      padding: 1.2rem;
+      border-bottom: 2px solid var(--border-cyan);
+    }
+    .stat-card .stat-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #8fbbff;
+    }
+    .stat-card .stat-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    /* Alert */
+    .alert-bar {
+      background: var(--alert-bg);
+      border-left: 6px solid #ff3366;
+      padding: 0.8rem 1.2rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+      margin-bottom: 1.8rem;
+      justify-content: space-between;
+    }
+    .filter-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-input, button, .import-export-btn {
+      background: var(--btn-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-primary);
+      padding: 0.6rem 1.2rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+    }
+    .filter-input {
+      background: var(--input-bg);
+      cursor: text;
+    }
+    button.primary {
+      background: var(--btn-primary-bg);
+      border-color: var(--border-cyan);
+      box-shadow: 0 0 6px rgba(0,255,255,0.4);
+    }
+    button.danger {
+      background: #5a1e2e;
+      border-color: #ff6680;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: #bbd9ff;
+      cursor: pointer;
+    }
+    .btn-icon:hover {
+      color: var(--border-cyan);
+    }
+    /* Advanced Filters */
+    .advanced-filters {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 1.5rem;
+      background: var(--panel-bg);
+      display: none;
+    }
+    .advanced-filters.show {
+      display: block;
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+      margin-top: 0.5rem;
+    }
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 1.5rem;
+      margin-top: 0.8rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th {
+      text-align: left;
+      padding: 1rem 0.8rem;
+      background: var(--table-header-bg);
+      font-family: monospace;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    td {
+      padding: 0.9rem 0.8rem;
+      border-bottom: 1px solid var(--table-border);
+      vertical-align: middle;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .threat-critical { background: #b91c2e; color: white; }
+    .threat-high { background: #c2410c; color: white; }
+    .threat-medium { background: #b45309; color: white; }
+    .threat-low { background: #2d6a4f; color: white; }
+    .status-active { background: #0f6b3a; }
+    .status-inactive { background: #5e5e5e; }
+    .status-review { background: #996e2e; }
+    .classification { background: #1e2a47; }
+    .threat-score-bar {
+      background: #333;
+      border-radius: 12px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .threat-score-fill {
+      height: 100%;
+      background: #ff3366;
+      width: 0%;
+      border-radius: 12px;
+    }
+    /* Recent Activities */
+    .recent-activities {
+      background: var(--panel-bg);
+      border-radius: 1.5rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.8rem;
+    }
+    .recent-activities h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    /* Attachments */
+    .attachments-section {
+      margin-top: 1rem;
+      border-top: 1px solid var(--border-cyan);
+      padding-top: 0.8rem;
+    }
+    .attachments-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .attachment-thumb {
+      width: 80px;
+      height: 80px;
+      background: var(--input-bg);
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--input-border);
+    }
+    .attachment-thumb img {
+      max-width: 60px;
+      max-height: 60px;
+      object-fit: cover;
+    }
+    .attachment-thumb i {
+      font-size: 2rem;
+    }
+    .attachment-thumb span {
+      font-size: 0.6rem;
+      text-align: center;
+      overflow: hidden;
+      width: 100%;
+    }
+    .delete-attachment {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: red;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    /* Gallery Modal */
+    .gallery-item {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .gallery-preview {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gallery-preview img, .gallery-preview i {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #0a1428dd;
+      backdrop-filter: blur(8px);
+      border-left: 4px solid var(--border-cyan);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-family: monospace;
+      z-index: 2000;
+      animation: fadeInOut 3s forwards;
+      pointer-events: none;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(20px); }
+      10% { opacity: 1; transform: translateY(0); }
+      90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
+    /* Modals */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #0b1120e6;
+      border: 1px solid var(--border-cyan);
+      border-radius: 2rem;
+      width: 90%;
+      max-width: 800px;
+      padding: 2rem;
+      position: relative;
+      color: white;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      color: #9bbdff;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      background: #030617;
+      border: 1px solid #2c5270;
+      border-radius: 1rem;
+      padding: 0.7rem;
+      color: white;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 1.5rem;
+    }
+    .close-modal {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #8ab3ff;
+    }
+    footer {
+      margin-top: 2.5rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #446688;
+    }
+    @media (max-width: 700px) {
+      body { padding: 1rem; }
+      th, td { font-size: 0.75rem; padding: 0.6rem; }
+      .threat-feed-container { flex-direction: column; }
+      .ticker { white-space: normal; }
+      .ticker-content { animation: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- Login Modal (unchanged) -->
+  <div id="loginModal" class="modal" style="display: flex;">
+    <div class="modal-content login-card" style="max-width: 400px;">
+      <h2><i class="fas fa-lock"></i> Classified Access</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <div class="modal-buttons">
+          <button type="submit" class="primary">Login</button>
+        </div>
+      </form>
+      <div id="loginError" style="color: #ff6680; margin-top: 1rem;"></div>
+    </div>
+  </div>
+
+  <!-- Main Application -->
+  <div id="mainApp" style="display: none;">
+    <!-- Header -->
+    <div class="header glass-panel">
+      <div class="title-section">
+        <h1><i class="fas fa-shield-haltered"></i> CLASSIFIED DATA MONITORING SYSTEM</h1>
+        <p>🔒 INTELLIGENCE ORGANISATION TRACKING • EYES ONLY</p>
+      </div>
+      <div class="user-info">
+        <div class="role-badge"><i class="fas fa-user-secret"></i> <span id="userRole"></span></div>
+        <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <button id="secureCommsBtn" class="secure-comms-btn" title="Secure Messaging"><i class="fas fa-envelope"></i> 📨</button>
+        <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i></button>
+      </div>
+    </div>
+
+    <!-- Real-Time Threat Feed -->
+    <div class="threat-feed-container">
+      <div class="ticker glass-panel">
+        <div class="ticker-content" id="threatTicker">⚡ Intelligence feed active. Waiting for threats...</div>
+      </div>
+      <div class="threat-feed-panel glass-panel">
+        <h4><i class="fas fa-bell"></i> Recent Threat Alerts <button id="refreshThreatBtn" class="refresh-feed"><i class="fas fa-sync-alt"></i> Simulate Alert</button></h4>
+        <div id="threatFeedList"></div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label"><i class="fas fa-building"></i> TOTAL ORGS</div><div class="stat-value" id="totalOrgs">0</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="fas fa-skull"></i> CRITICAL THREAT</div><div class="stat-value" id="criticalCount">0</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="fas fa-chart-line"></i> HIGH THREAT</div><div class="stat-value" id="highCount">0</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="fas fa-user-secret"></i> ACTIVE UNITS</div><div class="stat-value" id="activeCount">0</div></div>
+    </div>
+
+    <!-- Alert Zone -->
+    <div id="alertZone"></div>
+
+    <!-- Recent Activities Widget -->
+    <div class="recent-activities glass-panel">
+      <h3><i class="fas fa-clock"></i> Recent Activities</h3>
+      <div id="activityList">Loading...</div>
+    </div>
+
+    <!-- Chart & Export Row -->
+    <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
+      <div class="glass-panel" style="flex: 1; min-width: 240px; padding: 1rem;">
+        <div><i class="fas fa-chart-pie"></i> THREAT DISTRIBUTION</div>
+        <canvas id="threatChart" width="300" height="150" style="max-height:180px;"></canvas>
+      </div>
+      <div class="glass-panel" style="flex: 1; min-width: 240px; padding: 1rem;">
+        <div><i class="fas fa-database"></i> DATA OPERATIONS</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+          <button id="exportJsonBtn" class="primary"><i class="fas fa-file-export"></i> JSON</button>
+          <button id="exportCsvBtn"><i class="fas fa-file-csv"></i> CSV</button>
+          <button id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+          <label for="importFileInput" class="primary" style="background:#2a3f6e; padding:0.6rem 1.2rem; border-radius:2rem; cursor:pointer;">
+            <i class="fas fa-file-import"></i> Import JSON
+          </label>
+          <input type="file" id="importFileInput" accept=".json" style="display:none;">
+          <button id="viewAuditBtn"><i class="fas fa-history"></i> Audit Log</button>
+        </div>
+        <div style="margin-top: 10px;">
+          <button id="restoreBackupBtn" style="background:#5a4e1e;"><i class="fas fa-undo-alt"></i> Restore Backup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <input type="text" id="searchInput" class="filter-input" placeholder="🔍 Search name / type...">
+        <select id="threatFilter" class="filter-input">
+          <option value="all">⚠️ All threats</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+        <select id="classFilter" class="filter-input">
+          <option value="all">📁 All clearance</option>
+          <option value="Confidential">Confidential</option>
+          <option value="Secret">Secret</option>
+          <option value="Top Secret">Top Secret</option>
+        </select>
+        <button id="resetFiltersBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+        <button id="toggleAdvancedBtn"><i class="fas fa-sliders-h"></i> Advanced</button>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="batchDeleteBtn" class="danger" style="display: none;"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+        <button id="addNewBtn" class="primary"><i class="fas fa-plus-circle"></i> REGISTER</button>
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div id="advancedFilters" class="advanced-filters glass-panel">
+      <div class="filter-row">
+        <div><label>Date Range (Last Monitored)</label><input type="date" id="dateFrom" class="filter-input" style="width:140px;"> to <input type="date" id="dateTo" class="filter-input" style="width:140px;"></div>
+        <div><label>Threat Levels</label><select id="multiThreat" multiple size="4" style="width:150px;" class="filter-input"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+        <div><label>Status</label><select id="multiStatus" multiple size="3" style="width:120px;" class="filter-input"><option>Active</option><option>Inactive</option><option>Under Review</option></select></div>
+        <div><label>Classification</label><select id="multiClass" multiple size="3" style="width:120px;" class="filter-input"><option>Confidential</option><option>Secret</option><option>Top Secret</option></select></div>
+        <div><button id="applyAdvancedBtn" class="primary">Apply</button></div>
+      </div>
+    </div>
+
+    <!-- Data Table (added column for attachments) -->
+    <div class="glass-panel" style="padding: 0.2rem;">
+      <div class="table-wrapper">
+        <table id="orgTable">
+          <thead>
+            <tr><th style="width:30px;"><input type="checkbox" id="selectAllCheckbox"></th>
+              <th data-sort="name">NAME <i class="fas fa-sort"></i></th>
+              <th data-sort="type">TYPE <i class="fas fa-sort"></i></th>
+              <th data-sort="threatLevel">THREAT LVL <i class="fas fa-sort"></i></th>
+              <th data-sort="threatScore">THREAT SCORE <i class="fas fa-sort"></i></th>
+              <th data-sort="status">STATUS <i class="fas fa-sort"></i></th>
+              <th data-sort="classification">CLASSIFICATION <i class="fas fa-sort"></i></th>
+              <th data-sort="lastMonitored">LAST MONITORED <i class="fas fa-sort"></i></th>
+              <th data-sort="lastEdited">LAST EDITED <i class="fas fa-sort"></i></th>
+              <th>ATTACHMENTS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="11" style="text-align:center;">Loading classified registry...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Organisation Modal (with attachments) -->
+    <div id="orgModal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal" id="closeModalBtn">&times;</span>
+        <h3><span id="modalTitle">REGISTER NEW ENTITY</span></h3>
+        <form id="orgForm">
+          <div class="form-group"><label>ORGANISATION NAME *</label><input type="text" id="orgName" required></div>
+          <div class="form-group"><label>TYPE</label><select id="orgType"><option>Government</option><option>Private Military</option><option>Non-State Actor</option><option>Intelligence Agency</option><option>Cyber Collective</option></select></div>
+          <div class="form-group"><label>THREAT LEVEL</label><select id="orgThreat"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+          <div class="form-group"><label>THREAT SCORE (0-100)</label><input type="number" id="orgThreatScore" min="0" max="100" value="50"></div>
+          <div class="form-group"><label>OPERATIONAL STATUS</label><select id="orgStatus"><option>Active</option><option>Inactive</option><option>Under Review</option></select></div>
+          <div class="form-group"><label>CLASSIFICATION</label><select id="orgClass"><option>Confidential</option><option>Secret</option><option>Top Secret</option></select></div>
+          <div class="form-group"><label>FIELD NOTES</label><textarea id="orgNotes" rows="2"></textarea></div>
+          
+          <!-- Attachments Section -->
+          <div class="attachments-section">
+            <label><i class="fas fa-paperclip"></i> ATTACHMENTS (max 5 files, ≤500KB each, total ≤2MB)</label>
+            <input type="file" id="fileUpload" multiple accept="image/*,application/pdf,text/plain,audio/*">
+            <div id="attachmentsPreview" class="attachments-list"></div>
+          </div>
+          
+          <div class="modal-buttons"><button type="button" id="cancelModalBtn">Cancel</button><button type="submit" class="primary">Classify & Save</button></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Gallery Modal (view attachments) -->
+    <div id="galleryModal" class="modal">
+      <div class="modal-content" style="max-width: 700px;">
+        <span class="close-modal" id="closeGalleryModal">&times;</span>
+        <h3><i class="fas fa-images"></i> Attachment Gallery</h3>
+        <div id="galleryContent" style="max-height: 500px; overflow-y: auto;"></div>
+      </div>
+    </div>
+
+    <!-- Other modals (audit, messaging, view message) - unchanged -->
+    <div id="auditModal" class="modal">
+      <div class="modal-content" style="max-width:700px;">
+        <span class="close-modal" id="closeAuditModal">&times;</span>
+        <h3><i class="fas fa-history"></i> AUDIT TRAIL</h3>
+        <div id="auditLogList" style="max-height:400px; overflow-y:auto; font-family:monospace; font-size:0.8rem; margin-top:1rem;"></div>
+        <div class="modal-buttons"><button id="clearAuditBtn" class="danger">Clear Audit Log</button></div>
+      </div>
+    </div>
+
+    <div id="messageModal" class="modal">
+      <div class="modal-content" style="max-width: 650px;">
+        <span class="close-modal" id="closeMsgModal">&times;</span>
+        <h3><i class="fas fa-lock"></i> SECURE COMMUNICATIONS CHANNEL</h3>
+        <div style="margin: 1rem 0;">
+          <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-cyan); padding-bottom: 0.5rem;">
+            <button id="msgInboxBtn" class="primary" style="background: var(--btn-primary-bg);">Inbox</button>
+            <button id="msgComposeBtn">Compose</button>
+          </div>
+          <div id="msgInboxPanel">
+            <div class="message-list" id="messageList">Loading...</div>
+          </div>
+          <div id="msgComposePanel" style="display: none;">
+            <form id="composeMsgForm">
+              <div class="form-group"><label>Subject</label><input type="text" id="msgSubject" required></div>
+              <div class="form-group"><label>Message</label><textarea id="msgContent" rows="4" required></textarea></div>
+              <div class="form-group"><label>Encryption Passphrase</label><input type="password" id="msgPassphrase" placeholder="Required to encrypt/decrypt" required></div>
+              <div class="modal-buttons"><button type="submit" class="primary">Send & Encrypt</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="viewMsgModal" class="modal">
+      <div class="modal-content" style="max-width: 500px;">
+        <span class="close-modal" id="closeViewMsgModal">&times;</span>
+        <h3>Encrypted Message</h3>
+        <div id="viewMsgContent"></div>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label>Decryption Passphrase</label>
+          <input type="password" id="decryptPassphrase" placeholder="Enter passphrase to decrypt">
+          <button id="decryptMsgBtn" class="primary" style="margin-top: 0.5rem;">Decrypt</button>
+        </div>
+        <div id="decryptedResult" style="margin-top: 1rem; white-space: pre-wrap; background: var(--input-bg); padding: 0.5rem; border-radius: 0.5rem;"></div>
+      </div>
+    </div>
+
+    <footer><i class="fas fa-lock"></i> SECURE ENCLAVE • ALL ACTIONS LOGGED & BACKED UP</footer>
+  </div>
+</div>
+
+<script>
+  // ======================= AUTHENTICATION (unchanged) =======================
+  const users = [
+    { username: "admin", passwordHash: btoa("admin123"), role: "admin" },
+    { username: "analyst", passwordHash: btoa("analyst123"), role: "analyst" },
+    { username: "viewer", passwordHash: btoa("viewer123"), role: "viewer" }
+  ];
+  let currentUser = null;
+
+  function hashPassword(pwd) { return btoa(pwd); }
+
+  function authenticate(username, password) {
+    const user = users.find(u => u.username === username && u.passwordHash === hashPassword(password));
+    if (user) {
+      currentUser = { username: user.username, role: user.role };
+      sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
+      return true;
+    }
+    return false;
+  }
+
+  function logout() {
+    currentUser = null;
+    sessionStorage.removeItem("currentUser");
+    document.getElementById("mainApp").style.display = "none";
+    document.getElementById("loginModal").style.display = "flex";
+    document.getElementById("loginError").innerText = "";
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+    if (threatInterval) clearInterval(threatInterval);
+  }
+
+  function applyRoleRestrictions() {
+    const role = currentUser.role;
+    const adminOnly = ["exportJsonBtn", "exportCsvBtn", "exportPdfBtn", "importFileInput", "restoreBackupBtn", "clearAuditBtn", "batchDeleteBtn"];
+    adminOnly.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = (role !== "admin");
+    });
+    const importLabel = document.querySelector("label[for='importFileInput']");
+    if (importLabel) importLabel.style.opacity = (role === "admin") ? "1" : "0.5";
+    const addBtn = document.getElementById("addNewBtn");
+    if (addBtn) addBtn.disabled = (role === "viewer");
+    const batchBtn = document.getElementById("batchDeleteBtn");
+    if (batchBtn && role !== "admin") batchBtn.style.display = "none";
+  }
+
+  // ======================= REAL-TIME THREAT FEED (unchanged) =======================
+  let threatAlerts = [];
+  let threatInterval = null;
+
+  const threatTypes = ["Cyber Attack", "Data Leak", "Physical Breach", "Insider Threat", "Malware Outbreak", "Phishing Campaign", "Ransomware", "Espionage Attempt"];
+  const threatSeverities = ["Critical", "High", "Medium", "Low"];
+  function getRandomOrgName() {
+    if (organisations && organisations.length > 0) {
+      const randomOrg = organisations[Math.floor(Math.random() * organisations.length)];
+      return randomOrg.name;
+    }
+    return "Unknown Entity";
+  }
+  function generateRandomThreat() {
+    const severity = threatSeverities[Math.floor(Math.random() * threatSeverities.length)];
+    const type = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+    const org = getRandomOrgName();
+    const message = `${severity} threat: ${type} detected at ${org}.`;
+    const timestamp = new Date().toLocaleTimeString();
+    return { severity, type, org, message, timestamp };
+  }
+  function addThreatAlert(threat) {
+    threatAlerts.unshift(threat);
+    if (threatAlerts.length > 10) threatAlerts.pop();
+    updateThreatFeedUI();
+    updateThreatTicker(threat.message);
+    addAuditEntry("THREAT_ALERT", threat.message);
+    showToast(`⚠️ NEW THREAT: ${threat.message}`, false);
+  }
+  function updateThreatFeedUI() {
+    const container = document.getElementById("threatFeedList");
+    if (!container) return;
+    if (threatAlerts.length === 0) { container.innerHTML = "<div style='text-align:center; padding:0.5rem;'>No threats reported yet.</div>"; return; }
+    container.innerHTML = threatAlerts.map(alert => `
+      <div class="threat-alert">
+        <span class="severity severity-${alert.severity}">${alert.severity}</span>
+        <span>${alert.message}</span>
+        <span style="font-size:0.7rem;">${alert.timestamp}</span>
+      </div>
+    `).join("");
+  }
+  function updateThreatTicker(message) {
+    const tickerDiv = document.getElementById("threatTicker");
+    if (tickerDiv) {
+      tickerDiv.innerHTML = `⚡ ${message} &nbsp;&nbsp;|&nbsp;&nbsp; ${tickerDiv.innerHTML.split('&nbsp;&nbsp;|&nbsp;&nbsp;')[0] || ''}`;
+      const parts = tickerDiv.innerHTML.split('&nbsp;&nbsp;|&nbsp;&nbsp;');
+      if (parts.length > 4) tickerDiv.innerHTML = parts.slice(0, 3).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+    }
+  }
+  function startThreatFeed() {
+    if (threatInterval) clearInterval(threatInterval);
+    threatInterval = setInterval(() => {
+      const newThreat = generateRandomThreat();
+      addThreatAlert(newThreat);
+    }, 15000);
+  }
+  function manualThreatSimulation() {
+    const newThreat = generateRandomThreat();
+    addThreatAlert(newThreat);
+    showToast(`Manual threat simulation: ${newThreat.message}`, false);
+  }
+
+  // ======================= FILE ATTACHMENTS =======================
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 500 * 1024; // 500KB
+  const MAX_TOTAL_SIZE = 2 * 1024 * 1024; // 2MB
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // temporary storage while editing/adding
+  let tempAttachments = [];
+
+  function renderAttachmentThumbnails(attachments, container, deletable = true) {
+    container.innerHTML = '';
+    attachments.forEach((att, idx) => {
+      const div = document.createElement('div');
+      div.className = 'attachment-thumb';
+      div.title = att.name;
+      if (att.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = att.data;
+        div.appendChild(img);
+      } else {
+        const icon = document.createElement('i');
+        icon.className = att.type.startsWith('audio/') ? 'fas fa-music' : (att.type === 'application/pdf' ? 'fas fa-file-pdf' : 'fas fa-file');
+        div.appendChild(icon);
+      }
+      const nameSpan = document.createElement('span');
+      nameSpan.innerText = att.name.length > 12 ? att.name.substr(0, 10) + '...' : att.name;
+      div.appendChild(nameSpan);
+      if (deletable) {
+        const delBtn = document.createElement('div');
+        delBtn.className = 'delete-attachment';
+        delBtn.innerHTML = '×';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          attachments.splice(idx, 1);
+          renderAttachmentThumbnails(attachments, container, deletable);
+        };
+        div.appendChild(delBtn);
+      }
+      container.appendChild(div);
+    });
+  }
+
+  async function handleFileUpload(files, currentAttachments) {
+    let newAttachments = [...currentAttachments];
+    let totalSize = newAttachments.reduce((sum, a) => sum + (a.size || 0), 0);
+    if (newAttachments.length + files.length > MAX_FILES) {
+      showToast(`Maximum ${MAX_FILES} files allowed.`, true);
+      return newAttachments;
+    }
+    for (let file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        showToast(`File ${file.name} exceeds 500KB limit.`, true);
+        continue;
+      }
+      totalSize += file.size;
+      if (totalSize > MAX_TOTAL_SIZE) {
+        showToast(`Total attachments exceed 2MB limit.`, true);
+        break;
+      }
+      const base64 = await fileToBase64(file);
+      newAttachments.push({
+        id: Date.now() + '-' + Math.random(),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        data: base64,
+        uploadDate: new Date().toISOString()
+      });
+    }
+    return newAttachments;
+  }
+
+  // ======================= EXISTING CODE (condensed but all features preserved) =======================
+  const STORAGE_KEY = "classified_intel_orgs";
+  const AUDIT_KEY = "classified_audit_log";
+  const BACKUP_KEY = "classified_backup";
+  const MSG_STORAGE_KEY = "classified_messages";
+
+  let organisations = [];
+  let editModeId = null;
+  let currentSort = { field: "name", direction: "asc" };
+  let threatChart = null;
+  let messages = [];
+
+  function showToast(message, isError = false) {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${message}`;
+    toast.style.borderLeftColor = isError ? "#ff6680" : "#0ff";
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  function addAuditEntry(action, details) {
+    let logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || "[]");
+    logs.unshift({ timestamp: new Date().toISOString(), action, details, user: currentUser ? currentUser.username : "System" });
+    if (logs.length > 100) logs.pop();
+    localStorage.setItem(AUDIT_KEY, JSON.stringify(logs));
+    updateRecentActivities();
+  }
+
+  function getAuditLogs() { return JSON.parse(localStorage.getItem(AUDIT_KEY) || "[]"); }
+
+  function updateRecentActivities() {
+    const logs = getAuditLogs();
+    const container = document.getElementById("activityList");
+    if (logs.length === 0) { container.innerHTML = "No recent activities."; return; }
+    container.innerHTML = logs.slice(0, 5).map(log => `<div style="border-bottom:1px solid #2f4168; padding:4px 0;"><span style="color:#0ff;">[${new Date(log.timestamp).toLocaleString()}]</span> ${log.action}: ${log.details}</div>`).join("");
+  }
+
+  function renderAuditModal() {
+    const logs = getAuditLogs();
+    const container = document.getElementById("auditLogList");
+    if (logs.length === 0) { container.innerHTML = "<div>No audit entries recorded.</div>"; return; }
+    container.innerHTML = logs.map(log => `<div style="border-bottom:1px solid #2f4168; padding:8px 0;"><span style="color:#0ff;">[${new Date(log.timestamp).toLocaleString()}]</span> <strong>${log.action}</strong> – ${log.details}</div>`).join("");
+  }
+
+  function clearAuditLog() {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can clear audit log.", true); return; }
+    localStorage.setItem(AUDIT_KEY, "[]");
+    renderAuditModal();
+    updateRecentActivities();
+    showToast("Audit log cleared.");
+    addAuditEntry("CLEAR_AUDIT", "Audit log cleared by analyst.");
+  }
+
+  function createBackup() {
+    const backup = { timestamp: new Date().toISOString(), data: organisations };
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+    addAuditEntry("BACKUP", "Auto-backup created.");
+  }
+
+  function restoreBackup() {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can restore backup.", true); return; }
+    const backupStr = localStorage.getItem(BACKUP_KEY);
+    if (!backupStr) { showToast("No backup found.", true); return; }
+    try {
+      const backup = JSON.parse(backupStr);
+      if (confirm(`Restore backup from ${new Date(backup.timestamp).toLocaleString()}? Current data will be replaced.`)) {
+        organisations = backup.data;
+        saveToLocal();
+        addAuditEntry("RESTORE", `Restored backup from ${backup.timestamp}`);
+        updateMonitoringStats();
+        renderTable();
+        showToast("Backup restored.");
+      }
+    } catch(e) { showToast("Backup corrupted.", true); }
+  }
+
+  function saveToLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(organisations));
+    createBackup();
+  }
+
+  function loadData() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      organisations = JSON.parse(stored);
+      organisations.forEach(org => {
+        if (!org.lastEdited) org.lastEdited = org.lastMonitored || new Date().toISOString().slice(0,10);
+        if (org.threatScore === undefined) org.threatScore = 50;
+        if (!org.attachments) org.attachments = [];
+      });
+    } else {
+      organisations = [
+        { id: "org1", name: "Phoenix Initiative", type: "Government", threatLevel: "Medium", threatScore: 65, status: "Active", classification: "Secret", lastMonitored: "2025-03-20", lastEdited: "2025-03-20", notes: "Covert surveillance division.", attachments: [] },
+        { id: "org2", name: "Crimson Dawn", type: "Non-State Actor", threatLevel: "Critical", threatScore: 95, status: "Active", classification: "Top Secret", lastMonitored: "2025-03-21", lastEdited: "2025-03-21", notes: "High-risk paramilitary network.", attachments: [] },
+        { id: "org3", name: "Northern Watch", type: "Intelligence Agency", threatLevel: "Low", threatScore: 20, status: "Inactive", classification: "Confidential", lastMonitored: "2025-02-10", lastEdited: "2025-02-10", notes: "Dormant cell.", attachments: [] },
+        { id: "org4", name: "CyberPhantom", type: "Cyber Collective", threatLevel: "High", threatScore: 85, status: "Under Review", classification: "Secret", lastMonitored: "2025-03-19", lastEdited: "2025-03-19", notes: "Ransomware threats.", attachments: [] },
+        { id: "org5", name: "Avalon Intelligence", type: "Government", threatLevel: "Medium", threatScore: 55, status: "Active", classification: "Top Secret", lastMonitored: "2025-03-18", lastEdited: "2025-03-18", notes: "Allied foreign intel.", attachments: [] }
+      ];
+      saveToLocal();
+      addAuditEntry("Initialized", "Loaded default dataset.");
+    }
+  }
+
+  function updateMonitoringStats() {
+    const total = organisations.length;
+    const critical = organisations.filter(o => o.threatLevel === "Critical").length;
+    const high = organisations.filter(o => o.threatLevel === "High").length;
+    const active = organisations.filter(o => o.status === "Active").length;
+    document.getElementById("totalOrgs").innerText = total;
+    document.getElementById("criticalCount").innerText = critical;
+    document.getElementById("highCount").innerText = high;
+    document.getElementById("activeCount").innerText = active;
+    const alertZone = document.getElementById("alertZone");
+    if (critical > 0) {
+      alertZone.innerHTML = `<div class="alert-bar"><i class="fas fa-bell"></i> <strong>⚠️ CRITICAL THREAT ALERT ⚠️</strong> ${critical} organisation(s) with CRITICAL threat level detected.</div>`;
+    } else {
+      alertZone.innerHTML = `<div class="alert-bar" style="background:#0a2f2f; border-left-color:#0ff;"><i class="fas fa-check-circle"></i> MONITORING STANDBY: No critical-level entities.</div>`;
+    }
+    updateChart();
+  }
+
+  function updateChart() {
+    const counts = { Low:0, Medium:0, High:0, Critical:0 };
+    organisations.forEach(o => counts[o.threatLevel]++);
+    if (threatChart) threatChart.destroy();
+    const ctx = document.getElementById('threatChart').getContext('2d');
+    threatChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Low', 'Medium', 'High', 'Critical'],
+        datasets: [{ label: 'Organisations', data: [counts.Low, counts.Medium, counts.High, counts.Critical], backgroundColor: ['#2d6a4f', '#b45309', '#c2410c', '#b91c2e'] }]
+      },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top', labels: { color: getComputedStyle(document.body).getPropertyValue('--text-primary') } } } }
+    });
+  }
+
+  function getFilteredOrgs() {
+    let filtered = [...organisations];
+    const searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
+    const threatVal = document.getElementById("threatFilter").value;
+    const classVal = document.getElementById("classFilter").value;
+    if (searchTerm) filtered = filtered.filter(org => org.name.toLowerCase().includes(searchTerm) || org.type.toLowerCase().includes(searchTerm));
+    if (threatVal !== "all") filtered = filtered.filter(org => org.threatLevel === threatVal);
+    if (classVal !== "all") filtered = filtered.filter(org => org.classification === classVal);
+
+    const dateFrom = document.getElementById("dateFrom").value;
+    const dateTo = document.getElementById("dateTo").value;
+    if (dateFrom) filtered = filtered.filter(org => org.lastMonitored >= dateFrom);
+    if (dateTo) filtered = filtered.filter(org => org.lastMonitored <= dateTo);
+
+    const multiThreat = Array.from(document.getElementById("multiThreat").selectedOptions).map(opt => opt.value);
+    if (multiThreat.length) filtered = filtered.filter(org => multiThreat.includes(org.threatLevel));
+
+    const multiStatus = Array.from(document.getElementById("multiStatus").selectedOptions).map(opt => opt.value);
+    if (multiStatus.length) filtered = filtered.filter(org => multiStatus.includes(org.status));
+
+    const multiClass = Array.from(document.getElementById("multiClass").selectedOptions).map(opt => opt.value);
+    if (multiClass.length) filtered = filtered.filter(org => multiClass.includes(org.classification));
+
+    filtered.sort((a, b) => {
+      let aVal = a[currentSort.field];
+      let bVal = b[currentSort.field];
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+      if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return filtered;
+  }
+
+  function renderTable() {
+    const filtered = getFilteredOrgs();
+    const tbody = document.getElementById("tableBody");
+    if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;">NO RECORDS MATCH FILTERS</td></tr>`; return; }
+    let html = "";
+    filtered.forEach(org => {
+      const threatClass = `threat-${org.threatLevel.toLowerCase()}`;
+      const statusClass = org.status === "Active" ? "status-active" : (org.status === "Inactive" ? "status-inactive" : "status-review");
+      const scorePercent = org.threatScore || 0;
+      const canEdit = currentUser.role !== "viewer";
+      const hasAttachments = org.attachments && org.attachments.length > 0;
+      html += `<tr data-id="${org.id}">
+        <td><input type="checkbox" class="rowCheckbox" value="${org.id}" ${currentUser.role !== "admin" ? "disabled" : ""}></td>
+        <td><i class="fas fa-dot-circle" style="font-size:10px; color:#0ff;"></i> <strong>${escapeHtml(org.name)}</strong></td>
+        <td>${escapeHtml(org.type)}</td>
+        <td><span class="badge ${threatClass}">${org.threatLevel}</span></td>
+        <td><div style="display:flex; align-items:center; gap:6px;"><span>${scorePercent}</span><div class="threat-score-bar"><div class="threat-score-fill" style="width:${scorePercent}%;"></div></div></div></td>
+        <td><span class="badge ${statusClass}">${org.status}</span></td>
+        <td><span class="badge classification">${org.classification}</span></td>
+        <td style="font-family:monospace;">${org.lastMonitored}</td>
+        <td style="font-family:monospace;">${org.lastEdited || org.lastMonitored}</td>
+        <td>${hasAttachments ? `<button class="btn-icon view-attachments" data-id="${org.id}" title="View attachments (${org.attachments.length})"><i class="fas fa-paperclip"></i> ${org.attachments.length}</button>` : '<span style="opacity:0.5;">—</span>'}</td>
+        <td>${canEdit ? `<button class="btn-icon edit-org" data-id="${org.id}"><i class="fas fa-edit"></i></button> <button class="btn-icon delete-org" data-id="${org.id}" style="color:#ff8095;"><i class="fas fa-trash-alt"></i></button>` : '<span style="opacity:0.5;">—</span>'}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    if (currentUser.role !== "viewer") {
+      document.querySelectorAll('.edit-org').forEach(btn => btn.addEventListener('click', (e) => openEditModal(btn.getAttribute('data-id'))));
+      document.querySelectorAll('.delete-org').forEach(btn => btn.addEventListener('click', (e) => { if(confirm("Purge record?")) deleteOrganisationById(btn.getAttribute('data-id')); }));
+    }
+    document.querySelectorAll('.view-attachments').forEach(btn => btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-id');
+      const org = organisations.find(o => o.id === id);
+      if (org && org.attachments) openGalleryModal(org);
+    }));
+    const anyChecked = document.querySelectorAll('.rowCheckbox:checked').length > 0;
+    const batchBtn = document.getElementById("batchDeleteBtn");
+    if (currentUser.role === "admin") {
+      batchBtn.style.display = anyChecked ? "inline-block" : "none";
+    } else {
+      batchBtn.style.display = "none";
+    }
+  }
+
+  function deleteOrganisationById(id) {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can delete.", true); return; }
+    const org = organisations.find(o => o.id === id);
+    organisations = organisations.filter(o => o.id !== id);
+    saveToLocal();
+    addAuditEntry("DELETE", `Deleted organisation "${org.name}" (ID: ${id})`);
+    updateMonitoringStats();
+    renderTable();
+    showToast(`Organisation "${org.name}" purged.`);
+  }
+
+  function batchDelete() {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can batch delete.", true); return; }
+    const selected = Array.from(document.querySelectorAll('.rowCheckbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) return;
+    if (confirm(`Delete ${selected.length} selected organisation(s)?`)) {
+      const names = organisations.filter(o => selected.includes(o.id)).map(o => o.name).join(", ");
+      organisations = organisations.filter(o => !selected.includes(o.id));
+      saveToLocal();
+      addAuditEntry("BATCH_DELETE", `Deleted organisations: ${names}`);
+      updateMonitoringStats();
+      renderTable();
+      showToast(`${selected.length} organisation(s) deleted.`);
+    }
+  }
+
+  function openAddModal() {
+    if (currentUser.role === "viewer") { showToast("Access denied: Viewers cannot add.", true); return; }
+    editModeId = null;
+    tempAttachments = [];
+    document.getElementById("modalTitle").innerText = "REGISTER NEW INTELLIGENCE ENTITY";
+    document.getElementById("orgForm").reset();
+    document.getElementById("orgThreat").value = "Medium";
+    document.getElementById("orgThreatScore").value = 50;
+    document.getElementById("orgStatus").value = "Active";
+    document.getElementById("orgClass").value = "Secret";
+    document.getElementById("fileUpload").value = "";
+    renderAttachmentThumbnails(tempAttachments, document.getElementById("attachmentsPreview"), true);
+    document.getElementById("orgModal").style.display = "flex";
+  }
+
+  function openEditModal(id) {
+    if (currentUser.role === "viewer") { showToast("Access denied: Viewers cannot edit.", true); return; }
+    const org = organisations.find(o => o.id === id);
+    if (!org) return;
+    editModeId = id;
+    tempAttachments = [...(org.attachments || [])];
+    document.getElementById("modalTitle").innerText = "EDIT CLASSIFIED DOSSIER";
+    document.getElementById("orgName").value = org.name;
+    document.getElementById("orgType").value = org.type;
+    document.getElementById("orgThreat").value = org.threatLevel;
+    document.getElementById("orgThreatScore").value = org.threatScore || 50;
+    document.getElementById("orgStatus").value = org.status;
+    document.getElementById("orgClass").value = org.classification;
+    document.getElementById("orgNotes").value = org.notes || "";
+    document.getElementById("fileUpload").value = "";
+    renderAttachmentThumbnails(tempAttachments, document.getElementById("attachmentsPreview"), true);
+    document.getElementById("orgModal").style.display = "flex";
+  }
+
+  async function saveOrganisationFromForm(e) {
+    e.preventDefault();
+    if (currentUser.role === "viewer") { showToast("Access denied: Viewers cannot modify data.", true); return; }
+    const name = document.getElementById("orgName").value.trim();
+    if (!name) { showToast("Name required!", true); return; }
+    const today = new Date().toISOString().slice(0,10);
+    const threatScore = parseInt(document.getElementById("orgThreatScore").value, 10) || 50;
+    // handle file uploads from input
+    const fileInput = document.getElementById("fileUpload");
+    if (fileInput.files.length > 0) {
+      tempAttachments = await handleFileUpload(Array.from(fileInput.files), tempAttachments);
+      renderAttachmentThumbnails(tempAttachments, document.getElementById("attachmentsPreview"), true);
+    }
+    if (editModeId) {
+      const index = organisations.findIndex(o => o.id === editModeId);
+      if (index !== -1) {
+        const oldName = organisations[index].name;
+        organisations[index] = { ...organisations[index],
+          name,
+          type: document.getElementById("orgType").value,
+          threatLevel: document.getElementById("orgThreat").value,
+          threatScore: threatScore,
+          status: document.getElementById("orgStatus").value,
+          classification: document.getElementById("orgClass").value,
+          notes: document.getElementById("orgNotes").value,
+          lastMonitored: today,
+          lastEdited: today,
+          attachments: tempAttachments
+        };
+        addAuditEntry("EDIT", `Updated organisation "${oldName}" -> "${name}"`);
+        showToast(`Updated "${name}"`);
+      }
+    } else {
+      const newOrg = {
+        id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+        name,
+        type: document.getElementById("orgType").value,
+        threatLevel: document.getElementById("orgThreat").value,
+        threatScore: threatScore,
+        status: document.getElementById("orgStatus").value,
+        classification: document.getElementById("orgClass").value,
+        notes: document.getElementById("orgNotes").value,
+        lastMonitored: today,
+        lastEdited: today,
+        attachments: tempAttachments
+      };
+      organisations.push(newOrg);
+      addAuditEntry("CREATE", `Added new organisation "${name}" (${newOrg.threatLevel} threat)`);
+      showToast(`"${name}" added.`);
+    }
+    saveToLocal();
+    updateMonitoringStats();
+    renderTable();
+    document.getElementById("orgModal").style.display = "none";
+  }
+
+  function openGalleryModal(org) {
+    const container = document.getElementById("galleryContent");
+    if (!org.attachments || org.attachments.length === 0) {
+      container.innerHTML = "<div>No attachments.</div>";
+      document.getElementById("galleryModal").style.display = "flex";
+      return;
+    }
+    container.innerHTML = org.attachments.map(att => {
+      const preview = att.type.startsWith('image/') ? `<img src="${att.data}" style="max-width:100%; max-height:100%;">` : `<i class="fas fa-${att.type === 'application/pdf' ? 'file-pdf' : (att.type.startsWith('audio/') ? 'music' : 'file')}" style="font-size:2rem;"></i>`;
+      return `
+        <div class="gallery-item">
+          <div class="gallery-preview">${preview}</div>
+          <div style="flex:1;">
+            <div><strong>${escapeHtml(att.name)}</strong></div>
+            <div style="font-size:0.7rem;">${(att.size / 1024).toFixed(1)} KB | ${new Date(att.uploadDate).toLocaleString()}</div>
+            ${att.type.startsWith('audio/') ? `<audio controls style="width:100%; margin-top:0.2rem;"><source src="${att.data}" type="${att.type}">Your browser does not support the audio element.</audio>` : ''}
+          </div>
+          <div>
+            <a href="${att.data}" download="${att.name}" class="btn-icon" style="margin-right:0.5rem;"><i class="fas fa-download"></i></a>
+            ${currentUser.role === "admin" ? `<button class="btn-icon delete-attachment-gallery" data-id="${att.id}" style="color:#ff8095;"><i class="fas fa-trash-alt"></i></button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join("");
+    if (currentUser.role === "admin") {
+      document.querySelectorAll('.delete-attachment-gallery').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const attId = btn.getAttribute('data-id');
+          org.attachments = org.attachments.filter(a => a.id !== attId);
+          saveToLocal();
+          addAuditEntry("ATTACHMENT_DELETE", `Deleted attachment from ${org.name}`);
+          openGalleryModal(org);
+          renderTable();
+          showToast("Attachment deleted.");
+        });
+      });
+    }
+    document.getElementById("galleryModal").style.display = "flex";
+  }
+
+  // ======================= EXPORT/IMPORT (unchanged) =======================
+  function exportJSON() {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can export.", true); return; }
+    const dataStr = JSON.stringify(organisations, null, 2);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `classified_intel_${new Date().toISOString().slice(0,19)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("JSON exported.");
+  }
+
+  function exportCSV() {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can export.", true); return; }
+    const headers = ["name","type","threatLevel","threatScore","status","classification","lastMonitored","lastEdited","notes","attachmentsCount"];
+    const rows = organisations.map(o => headers.map(h => JSON.stringify(h === "attachmentsCount" ? (o.attachments?.length || 0) : (o[h] || ""))).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], {type: "text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `classified_data_${new Date().toISOString().slice(0,19)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("CSV exported.");
+  }
+
+  function exportPDF() {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can export PDF.", true); return; }
+    const element = document.getElementById("orgTable").cloneNode(true);
+    const wrapper = document.createElement("div");
+    wrapper.appendChild(element);
+    html2pdf().from(wrapper).set({ margin: 0.5, filename: `classified_report_${new Date().toISOString().slice(0,10)}.pdf` }).save();
+    showToast("PDF generation started.");
+  }
+
+  function importJSON(file) {
+    if (currentUser.role !== "admin") { showToast("Access denied: Only admins can import.", true); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          organisations = imported;
+          saveToLocal();
+          addAuditEntry("IMPORT", `Imported ${imported.length} records from JSON.`);
+          updateMonitoringStats();
+          renderTable();
+          showToast(`Imported ${imported.length} organisations.`);
+        } else throw new Error("Invalid format");
+      } catch (err) { showToast("Import failed: invalid JSON", true); }
+    };
+    reader.readAsText(file);
+  }
+
+  // ======================= THEME & SORTING =======================
+  function toggleTheme() {
+    document.body.classList.toggle("light");
+    const icon = document.querySelector("#themeToggle i");
+    if (document.body.classList.contains("light")) {
+      icon.classList.remove("fa-moon");
+      icon.classList.add("fa-sun");
+    } else {
+      icon.classList.remove("fa-sun");
+      icon.classList.add("fa-moon");
+    }
+    updateChart();
+  }
+
+  function initSorting() {
+    document.querySelectorAll("th[data-sort]").forEach(th => {
+      th.addEventListener("click", () => {
+        const field = th.getAttribute("data-sort");
+        if (currentSort.field === field) currentSort.direction = currentSort.direction === "asc" ? "desc" : "asc";
+        else { currentSort.field = field; currentSort.direction = "asc"; }
+        renderTable();
+      });
+    });
+  }
+
+  function toggleAdvanced() {
+    document.getElementById("advancedFilters").classList.toggle("show");
+  }
+
+  // ======================= SECURE MESSAGING (unchanged, but keep functions) =======================
+  function loadMessages() {
+    const stored = localStorage.getItem(MSG_STORAGE_KEY);
+    if (stored) messages = JSON.parse(stored);
+    else messages = [];
+    renderMessageList();
+  }
+
+  function saveMessages() {
+    localStorage.setItem(MSG_STORAGE_KEY, JSON.stringify(messages));
+  }
+
+  function renderMessageList() {
+    const container = document.getElementById("messageList");
+    if (!container) return;
+    if (messages.length === 0) {
+      container.innerHTML = "<div style='text-align:center; padding:1rem;'>No secure messages.</div>";
+      return;
+    }
+    container.innerHTML = messages.map(msg => `
+      <div class="message-item" data-id="${msg.id}">
+        <div class="message-info">
+          <h4><i class="fas fa-envelope"></i> ${escapeHtml(msg.subject)}</h4>
+          <p>${new Date(msg.timestamp).toLocaleString()} • Encrypted</p>
+        </div>
+        <div class="message-actions">
+          <button class="view-message" data-id="${msg.id}"><i class="fas fa-eye"></i> View</button>
+          <button class="delete-message" data-id="${msg.id}" style="color:#ff8095;"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </div>
+    `).join("");
+    document.querySelectorAll('.view-message').forEach(btn => {
+      btn.addEventListener('click', () => openViewMessage(btn.getAttribute('data-id')));
+    });
+    document.querySelectorAll('.delete-message').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (confirm("Delete this secure message?")) {
+          messages = messages.filter(m => m.id !== id);
+          saveMessages();
+          renderMessageList();
+          addAuditEntry("MESSAGE_DELETE", `Deleted message with ID ${id}`);
+          showToast("Message deleted.");
+        }
+      });
+    });
+  }
+
+  function openViewMessage(id) {
+    const msg = messages.find(m => m.id === id);
+    if (!msg) return;
+    document.getElementById("viewMsgContent").innerHTML = `<strong>Subject:</strong> ${escapeHtml(msg.subject)}<br><strong>Sent:</strong> ${new Date(msg.timestamp).toLocaleString()}<br><strong>Encrypted content:</strong> ${escapeHtml(msg.encryptedContent.substring(0, 50))}...`;
+    document.getElementById("decryptPassphrase").value = "";
+    document.getElementById("decryptedResult").innerHTML = "";
+    document.getElementById("viewMsgModal").style.display = "flex";
+    document.getElementById("decryptMsgBtn").onclick = () => {
+      const passphrase = document.getElementById("decryptPassphrase").value;
+      if (!passphrase) { showToast("Passphrase required", true); return; }
+      try {
+        const bytes = CryptoJS.AES.decrypt(msg.encryptedContent, passphrase);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        if (!decrypted) throw new Error("Decryption failed");
+        document.getElementById("decryptedResult").innerHTML = `<strong>Decrypted Message:</strong><br>${escapeHtml(decrypted)}`;
+        addAuditEntry("MESSAGE_VIEW", `Viewed message "${msg.subject}" (decrypted successfully)`);
+      } catch(e) {
+        document.getElementById("decryptedResult").innerHTML = "<span style='color:#ff6680;'>❌ Decryption failed. Wrong passphrase.</span>";
+        addAuditEntry("MESSAGE_VIEW_FAIL", `Failed to decrypt message "${msg.subject}"`);
+      }
+    };
+  }
+
+  function composeMessage(subject, content, passphrase) {
+    if (!subject || !content || !passphrase) return false;
+    const encrypted = CryptoJS.AES.encrypt(content, passphrase).toString();
+    const newMsg = {
+      id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+      subject: subject,
+      encryptedContent: encrypted,
+      timestamp: new Date().toISOString(),
+      encrypted: true
+    };
+    messages.unshift(newMsg);
+    saveMessages();
+    renderMessageList();
+    addAuditEntry("MESSAGE_COMPOSE", `Composed new message "${subject}"`);
+    return true;
+  }
+
+  function showMessageModal() {
+    document.getElementById("messageModal").style.display = "flex";
+    document.getElementById("msgInboxPanel").style.display = "block";
+    document.getElementById("msgComposePanel").style.display = "none";
+    renderMessageList();
+  }
+
+  function closeMessageModal() { document.getElementById("messageModal").style.display = "none"; }
+
+  document.getElementById("composeMsgForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const subject = document.getElementById("msgSubject").value.trim();
+    const content = document.getElementById("msgContent").value.trim();
+    const passphrase = document.getElementById("msgPassphrase").value;
+    if (!subject || !content || !passphrase) {
+      showToast("All fields required (including passphrase)", true);
+      return;
+    }
+    if (composeMessage(subject, content, passphrase)) {
+      showToast("Secure message sent and encrypted.");
+      document.getElementById("composeMsgForm").reset();
+      document.getElementById("msgInboxBtn").click();
+    } else {
+      showToast("Failed to send message", true);
+    }
+  });
+
+  document.getElementById("msgInboxBtn")?.addEventListener("click", () => {
+    document.getElementById("msgInboxPanel").style.display = "block";
+    document.getElementById("msgComposePanel").style.display = "none";
+    renderMessageList();
+  });
+  document.getElementById("msgComposeBtn")?.addEventListener("click", () => {
+    document.getElementById("msgInboxPanel").style.display = "none";
+    document.getElementById("msgComposePanel").style.display = "block";
+  });
+
+  // ======================= EVENT BINDINGS =======================
+  function bindEvents() {
+    document.getElementById("searchInput").addEventListener("input", () => renderTable());
+    document.getElementById("threatFilter").addEventListener("change", () => renderTable());
+    document.getElementById("classFilter").addEventListener("change", () => renderTable());
+    document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("threatFilter").value = "all";
+      document.getElementById("classFilter").value = "all";
+      document.getElementById("dateFrom").value = "";
+      document.getElementById("dateTo").value = "";
+      document.getElementById("multiThreat").selectedIndex = -1;
+      document.getElementById("multiStatus").selectedIndex = -1;
+      document.getElementById("multiClass").selectedIndex = -1;
+      renderTable();
+    });
+    document.getElementById("addNewBtn").addEventListener("click", openAddModal);
+    document.getElementById("closeModalBtn").addEventListener("click", () => document.getElementById("orgModal").style.display = "none");
+    document.getElementById("cancelModalBtn").addEventListener("click", () => document.getElementById("orgModal").style.display = "none");
+    document.getElementById("orgForm").addEventListener("submit", saveOrganisationFromForm);
+    document.getElementById("exportJsonBtn").addEventListener("click", exportJSON);
+    document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+    document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
+    document.getElementById("importFileInput").addEventListener("change", (e) => { if(e.target.files.length) importJSON(e.target.files[0]); e.target.value=""; });
+    document.getElementById("viewAuditBtn").addEventListener("click", () => { renderAuditModal(); document.getElementById("auditModal").style.display = "flex"; });
+    document.getElementById("closeAuditModal").addEventListener("click", () => document.getElementById("auditModal").style.display = "none");
+    document.getElementById("clearAuditBtn").addEventListener("click", clearAuditLog);
+    document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+    document.getElementById("toggleAdvancedBtn").addEventListener("click", toggleAdvanced);
+    document.getElementById("applyAdvancedBtn").addEventListener("click", () => renderTable());
+    document.getElementById("batchDeleteBtn").addEventListener("click", batchDelete);
+    document.getElementById("restoreBackupBtn").addEventListener("click", restoreBackup);
+    document.getElementById("selectAllCheckbox").addEventListener("change", (e) => {
+      document.querySelectorAll(".rowCheckbox").forEach(cb => cb.checked = e.target.checked);
+      renderTable();
+    });
+    document.getElementById("secureCommsBtn").addEventListener("click", showMessageModal);
+    document.getElementById("closeMsgModal").addEventListener("click", closeMessageModal);
+    document.getElementById("closeViewMsgModal").addEventListener("click", () => document.getElementById("viewMsgModal").style.display = "none");
+    document.getElementById("closeGalleryModal").addEventListener("click", () => document.getElementById("galleryModal").style.display = "none");
+    window.addEventListener("click", (e) => { if(e.target.classList.contains("modal")) document.querySelectorAll(".modal").forEach(m => m.style.display = "none"); });
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("refreshThreatBtn").addEventListener("click", manualThreatSimulation);
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const username = document.getElementById("loginUsername").value;
+      const password = document.getElementById("loginPassword").value;
+      if (authenticate(username, password)) {
+        document.getElementById("loginError").innerText = "";
+        document.getElementById("mainApp").style.display = "block";
+        document.getElementById("loginModal").style.display = "none";
+        document.getElementById("userRole").innerText = currentUser.role.toUpperCase();
+        applyRoleRestrictions();
+        addAuditEntry("LOGIN", `User ${currentUser.username} logged in.`);
+        initApp();
+        startThreatFeed();
+      } else {
+        document.getElementById("loginError").innerText = "Invalid credentials. Access denied.";
+      }
+    });
+  }
+
+  function initApp() {
+    loadData();
+    loadMessages();
+    updateMonitoringStats();
+    renderTable();
+    updateRecentActivities();
+  }
+
+  function checkLogin() {
+    const stored = sessionStorage.getItem("currentUser");
+    if (stored) {
+      currentUser = JSON.parse(stored);
+      document.getElementById("mainApp").style.display = "block";
+      document.getElementById("loginModal").style.display = "none";
+      document.getElementById("userRole").innerText = currentUser.role.toUpperCase();
+      applyRoleRestrictions();
+      initApp();
+      startThreatFeed();
+    } else {
+      document.getElementById("mainApp").style.display = "none";
+      document.getElementById("loginModal").style.display = "flex";
+    }
+  }
+
+  checkLogin();
+  bindEvents();
+</script>
+</body>
+</html>
